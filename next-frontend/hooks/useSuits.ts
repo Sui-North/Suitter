@@ -17,8 +17,57 @@ export function useSuits() {
   const { mutateAsync: signAndExecute } = useSignAndExecuteTransaction();
 
   const [isPosting, setIsPosting] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const address = account?.address ?? null;
+
+  const fetchSuits = useCallback(
+    async (limit: number = 20, offset: number = 0) => {
+      setIsFetching(true);
+      setError(null);
+      try {
+        // Get the SuitRegistry to fetch suit IDs
+        const registry = await suiClient.getObject({
+          id: SUIT_REGISTRY_ID,
+          options: { showContent: true },
+        });
+
+        const registryContent = registry.data?.content as any;
+        const suitIds = registryContent?.fields?.suit_ids || [];
+
+        // Get recent suits (reverse order for newest first)
+        const recentSuitIds = suitIds
+          .slice(-limit - offset)
+          .reverse()
+          .slice(offset, offset + limit);
+
+        // Fetch all suit objects
+        const suits = await Promise.all(
+          recentSuitIds.map(async (id: string) => {
+            try {
+              const suit = await suiClient.getObject({
+                id,
+                options: { showContent: true, showOwner: true },
+              });
+              return suit.data;
+            } catch (e) {
+              console.error(`Failed to fetch suit ${id}:`, e);
+              return null;
+            }
+          })
+        );
+
+        return suits.filter(Boolean);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to fetch suits");
+        console.error("Failed to fetch suits:", e);
+        return [];
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [suiClient]
+  );
 
   const postSuit = useCallback(
     async (content: string, mediaUrls?: string[]) => {
@@ -63,7 +112,7 @@ export function useSuits() {
   );
 
   return useMemo(
-    () => ({ address, isPosting, error, postSuit }),
-    [address, isPosting, error, postSuit]
+    () => ({ address, isPosting, isFetching, error, postSuit, fetchSuits }),
+    [address, isPosting, isFetching, error, postSuit, fetchSuits]
   );
 }

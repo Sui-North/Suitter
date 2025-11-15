@@ -8,6 +8,7 @@ import { Transaction } from "@mysten/sui/transactions";
 import CONFIG from "../config";
 
 const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID;
+const USERNAME_REGISTRY_ID = CONFIG.USERNAME_REGISTRY;
 const PROFILE_TYPE = `${PACKAGE_ID}::profile::Profile`;
 
 export function useProfile() {
@@ -66,18 +67,25 @@ export function useProfile() {
       if (!PACKAGE_ID || PACKAGE_ID === "0x...") {
         throw new Error("VITE_PACKAGE_ID not configured");
       }
+      if (!USERNAME_REGISTRY_ID) {
+        throw new Error("USERNAME_REGISTRY not configured");
+      }
       setIsLoading(true);
       setError(null);
       try {
         const tx = new Transaction();
-        tx.moveCall({
+        // create_profile returns a Profile object that needs to be transferred
+        const profile = tx.moveCall({
           target: `${PACKAGE_ID}::profile::create_profile`,
           arguments: [
+            tx.object(USERNAME_REGISTRY_ID), // &mut UsernameRegistry
             tx.pure.string(username),
             tx.pure.string(bio),
             tx.pure.string(pfpUrl),
           ],
         });
+        // Transfer the profile to the sender
+        tx.transferObjects([profile], address);
         const { digest } = await signAndExecute({ transaction: tx });
         await suiClient.waitForTransaction({ digest });
         return digest;
@@ -102,6 +110,9 @@ export function useProfile() {
       if (!PACKAGE_ID || PACKAGE_ID === "0x...") {
         throw new Error("VITE_PACKAGE_ID not configured");
       }
+      if (!USERNAME_REGISTRY_ID) {
+        throw new Error("USERNAME_REGISTRY not configured");
+      }
       setIsLoading(true);
       setError(null);
       try {
@@ -109,7 +120,8 @@ export function useProfile() {
         tx.moveCall({
           target: `${PACKAGE_ID}::profile::update_profile`,
           arguments: [
-            tx.object(profileId),
+            tx.object(profileId), // &mut Profile
+            tx.object(USERNAME_REGISTRY_ID), // &mut UsernameRegistry
             tx.pure.string(username),
             tx.pure.string(bio),
             tx.pure.string(pfpUrl),
