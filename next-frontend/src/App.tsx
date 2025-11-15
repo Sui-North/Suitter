@@ -10,6 +10,7 @@ import NotificationsPage from "./pages/NotificationsPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import SuitsPage from "./pages/SuitsPage";
+import AssetsPage from "./pages/AssetsPage";
 import { AppProvider } from "@/components/providers/AppProvider";
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="suits" element={<SuitsPage />} />
+              <Route path="assets" element={<AssetsPage />} />
             </Route>
           </Routes>
         </BrowserRouter>

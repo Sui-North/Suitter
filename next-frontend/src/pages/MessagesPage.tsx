@@ -106,7 +106,7 @@ function MessagesContent() {
           onCompose={() => setIsComposeOpen(true)}
         />
 
-        <main className="flex-1 overflow-hidden border-r border-border max-w-2xl">
+        <main className="flex-1 overflow-hidden border-r border-border w-full">
         <div className="h-full flex">
           {/* Chat List */}
           <div
@@ -295,7 +295,7 @@ function MessagesContent() {
         </div>
         </main>
 
-        <TrendingSidebar />
+        {/* <TrendingSidebar /> */}
       </div>
 
       <ComposeModal isOpen={isComposeOpen} onClose={() => setIsComposeOpen(false)} />

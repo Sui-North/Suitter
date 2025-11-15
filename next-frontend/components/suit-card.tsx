@@ -94,29 +94,34 @@ export function SuitCard({
             {/* Header with Author Info and Three-Dot Menu */}
             <div className="flex items-center justify-between">
               {/* Avatar */}
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
-                {avatar}
-              </div>
-              <div className="flex items-center gap-1 text-sm flex-wrap">
-                <span className="font-semibold text-foreground hover:underline">
-                  {author}
-                </span>
-                <span className="text-muted-foreground">@{handle}</span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground hover:underline">
-                  {formatTime(timestamp)}
-                </span>
-                {isNFT && (
-                  <span
-                    className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
-                      isEncrypted
-                        ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
-                        : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
-                    }`}
-                  >
-                    {isEncrypted ? "🔐 NFT" : "📦 Suit"}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">
+                  {avatar}
+                </div>
+                <div className="flex text-sm flex-wrap gap-10 items-start">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-foreground hover:underline">
+                      {author}
+                    </span>
+                    <span className="text-muted-foreground">@{handle}</span>
+                  </div>
+                  <div className="flex items-center">
+                  <span className="text-muted-foreground hover:underline">
+                    {formatTime(timestamp)}
                   </span>
-                )}
+                  {isNFT && (
+                    <span
+                      className={`ml-2 text-xs font-semibold px-2 py-1 rounded-full ${
+                        isEncrypted
+                          ? "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+                          : "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+                      }`}
+                    >
+                      {isEncrypted ? "🔐 NFT" : "📦 Suit"}
+                    </span>
+                  )}
+                  </div>
+                </div>
               </div>
 
               <div className="relative">

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useSui } from './sui-context'
 import { SuitCard } from './suit-card'
+import { FeedVertical } from './feed-vertical'
 
 interface Suit {
   id: string
@@ -102,47 +103,56 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
 
   return (
     <div className="h-full flex flex-col bg-background">
-      <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border px-4 py-4 z-10">
-        <div className="flex gap-3 justify-center border rounded-2xl p-2 max-w-md mx-auto">
+      <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-border z-10">
+        <div className="flex border-b border-border">
           <button
             onClick={() => setTab('foryou')}
-            className={`px-6 py-2 rounded-full font-semibold transition-all ${
+            className={`flex-1 px-4 py-4 font-semibold text-sm transition-colors relative hover:bg-muted/50 ${
               tab === 'foryou' 
-                ? 'bg-foreground text-background' 
-                : 'bg-muted text-foreground hover:bg-muted/80'
+                ? 'text-foreground' 
+                : 'text-muted-foreground'
             }`}
           >
             For You
+            {tab === 'foryou' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t" />
+            )}
           </button>
           <button
             onClick={() => setTab('following')}
             disabled={!address}
-            className={`px-6 py-2 rounded-full font-semibold transition-all disabled:opacity-50 ${
+            className={`flex-1 px-4 py-4 font-semibold text-sm transition-colors relative hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed ${
               tab === 'following' 
-                ? 'bg-foreground text-background' 
-                : 'bg-muted text-foreground hover:bg-muted/80'
+                ? 'text-foreground' 
+                : 'text-muted-foreground'
             }`}
           >
             Following
+            {tab === 'following' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t" />
+            )}
           </button>
           <button
             onClick={() => setTab('feed')}
-            className={`px-6 py-2 rounded-full font-semibold transition-all ${
+            className={`flex-1 px-4 py-4 font-semibold text-sm transition-colors relative hover:bg-muted/50 ${
               tab === 'feed'
-                ? 'bg-foreground text-background' 
-                : 'bg-muted text-foreground hover:bg-muted/80'
+                ? 'text-foreground' 
+                : 'text-muted-foreground'
             }`}
           >
             Feed
+            {tab === 'feed' && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t" />
+            )}
           </button>
         </div>
       </div>
 
       {/* Compose Section */}
-      {address && (
+      {address && tab !== 'feed' && (
         <div className="border-b border-border p-4">
           <div className="flex gap-4">
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold flex-shrink-0">
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0">
               {address.slice(-4).toUpperCase()}
             </div>
             <div className="flex-1">
@@ -157,17 +167,23 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
         </div>
       )}
 
-      {/* Suits Feed using SuitCard component */}
+      {/* Conditional Content Based on Tab */}
       <div className="flex-1 overflow-y-auto">
-        {suits.map((suit) => (
-          <SuitCard
-            key={suit.id}
-            {...suit}
-            onLike={toggleLike}
-            onBookmark={toggleBookmark}
-            bookmarked={bookmarks.has(suit.id)}
-          />
-        ))}
+        {tab === 'feed' ? (
+          <FeedVertical />
+        ) : (
+          <>
+            {suits.map((suit) => (
+              <SuitCard
+                key={suit.id}
+                {...suit}
+                onLike={toggleLike}
+                onBookmark={toggleBookmark}
+                bookmarked={bookmarks.has(suit.id)}
+              />
+            ))}
+          </>
+        )}
       </div>
     </div>
   )

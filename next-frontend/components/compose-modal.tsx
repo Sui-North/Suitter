@@ -4,7 +4,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { X, Image, Smile, Loader2, Video, XCircle } from 'lucide-react'
-import { useSui } from './sui-context'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 import { motion, AnimatePresence } from 'framer-motion'
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react'
 
@@ -19,7 +19,8 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/web
 const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 
 export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
-  const { address } = useSui()
+  const currentAccount = useCurrentAccount()
+  const address = currentAccount?.address
   const [content, setContent] = useState('')
   const [isPosting, setIsPosting] = useState(false)
   const [error, setError] = useState('')
@@ -315,7 +316,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
                   <Smile size={20} />
                 </button>
                 {showEmojiPicker && (
-                  <div className="absolute bottom-full left-0 mb-2 z-[60] shadow-2xl">
+                  <div className="absolute bottom-full left-0 mb-2 z-60 shadow-2xl">
                     <EmojiPicker
                       onEmojiClick={handleEmojiClick}
                       theme={Theme.AUTO}
