@@ -1,9 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  ConnectButton,
-  useConnectWallet,
-  useCurrentAccount,
-} from "@mysten/dapp-kit";
+import { ConnectButton } from "@mysten/dapp-kit";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 
