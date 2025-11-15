@@ -101,7 +101,7 @@ public fun send_message(
     });
 }
 
-public fun mark_as_read(
+public entry fun mark_as_read(
     chat: &mut Chat,
     message_index: u64,
     clock: &Clock,
@@ -134,23 +134,17 @@ public fun new_message(
     content_hash: vector<u64>,
     sent_timestamp: u64,
 ): Message {
-    Message { 
-        sender, 
-        encrypted_message, 
-        content_hash, 
-        sent_timestamp, 
-        is_read: false 
+    Message {
+        sender,
+        encrypted_message,
+        content_hash,
+        sent_timestamp,
+        is_read: false,
     }
 }
 
 // ===== Setting up access control function (messaging) =====
-entry fun is_approve_chat(
-    _id: vector<u8>,
-    chat: &Chat,
-    ctx: &TxContext,
-) {
+entry fun is_approve_chat(_id: vector<u8>, chat: &Chat, ctx: &TxContext) {
     let sender = tx_context::sender(ctx);
     assert!(sender == chat.sender || sender == chat.receiver, E_NOT_PARTICIPANT);
-}
-
 }
