@@ -6,8 +6,9 @@ import {
 import { Transaction } from "@mysten/sui/transactions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import CONFIG from "../config/index";
-// Replace with your deployed package ID
-const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID || "0x...";
+
+// Your deployed package ID
+const PACKAGE_ID = CONFIG.VITE_PACKAGE_ID;
 const CLOCK_OBJECT_ID = "0x6";
 
 export interface Message {
@@ -16,6 +17,7 @@ export interface Message {
   contentHash: number[];
   sentTimestamp: string;
   isRead: boolean;
+  text?: string;
 }
 
 export interface Chat {
@@ -25,6 +27,19 @@ export interface Chat {
   messages: Message[];
 }
 
+export interface Channel {
+  id: string;
+  name: string;
+  members: number;
+  messagesCount: number;
+  lastMessage: {
+    text: string;
+    sender: string;
+    timestamp: number;
+  } | null;
+  creator: string;
+}
+
 export function useMessaging() {
   const client = useSuiClient();
   const currentAccount = useCurrentAccount();
@@ -32,7 +47,7 @@ export function useMessaging() {
   const queryClient = useQueryClient();
 
   // Fetch user's chats
-  const { data: chats, isLoading: chatsLoading } = useQuery({
+  const { data: chats, isLoading: isLoadingChats } = useQuery({
     queryKey: ["chats", currentAccount?.address],
     queryFn: async () => {
       if (!currentAccount?.address) return [];
@@ -62,10 +77,38 @@ export function useMessaging() {
       }
     },
     enabled: !!currentAccount?.address,
+    refetchInterval: 5000, // Poll every 5 seconds
+  });
+
+  // Convert chats to channels format for UI compatibility
+  const channels: Channel[] = (chats || []).map((chat: Chat) => {
+    const otherParty =
+      chat.sender === currentAccount?.address ? chat.receiver : chat.sender;
+    const shortAddress = `${otherParty.slice(0, 6)}...${otherParty.slice(-4)}`;
+
+    const lastMsg =
+      chat.messages && chat.messages.length > 0
+        ? chat.messages[chat.messages.length - 1]
+        : null;
+
+    return {
+      id: chat.id,
+      name: shortAddress,
+      members: 2,
+      messagesCount: chat.messages?.length || 0,
+      lastMessage: lastMsg
+        ? {
+            text: decodeMessage(lastMsg.encryptedMessage),
+            sender: lastMsg.sender,
+            timestamp: parseInt(lastMsg.sentTimestamp) || 0,
+          }
+        : null,
+      creator: chat.sender,
+    };
   });
 
   // Start a new chat
-  const startChat = useMutation({
+  const createChannel = useMutation({
     mutationFn: async (receiverAddress: string) => {
       if (!currentAccount?.address) throw new Error("No account connected");
 
@@ -103,30 +146,30 @@ export function useMessaging() {
   // Send a message
   const sendMessage = useMutation({
     mutationFn: async ({
-      chatId,
-      message,
+      channelId,
+      content,
     }: {
-      chatId: string;
-      message: string;
+      channelId: string;
+      content: string;
     }) => {
       if (!currentAccount?.address) throw new Error("No account connected");
 
       const tx = new Transaction();
 
       // Convert message to encrypted format (simple encoding for demo)
-      const encryptedMessage = Array.from(message).map((char) =>
+      const encryptedMessage = Array.from(content).map((char) =>
         char.charCodeAt(0)
       );
 
       // Create a simple hash of the content
-      const contentHash = Array.from(message).map(
+      const contentHash = Array.from(content).map(
         (char) => char.charCodeAt(0) * 31
       );
 
       tx.moveCall({
         target: `${PACKAGE_ID}::messaging::send_message`,
         arguments: [
-          tx.object(chatId),
+          tx.object(channelId),
           tx.pure.vector("u64", encryptedMessage),
           tx.pure.vector("u64", contentHash),
           tx.object(CLOCK_OBJECT_ID),
@@ -141,7 +184,9 @@ export function useMessaging() {
           {
             onSuccess: (result) => {
               console.log("Message sent:", result);
-              queryClient.invalidateQueries({ queryKey: ["messages", chatId] });
+              queryClient.invalidateQueries({
+                queryKey: ["messages", channelId],
+              });
               queryClient.invalidateQueries({ queryKey: ["chats"] });
               resolve(result);
             },
@@ -199,15 +244,15 @@ export function useMessaging() {
   });
 
   // Get messages for a specific chat
-  const useMessages = (chatId: string | null) => {
+  const useMessages = (channelId: string | null) => {
     return useQuery({
-      queryKey: ["messages", chatId],
+      queryKey: ["messages", channelId],
       queryFn: async () => {
-        if (!chatId) return [];
+        if (!channelId) return [];
 
         try {
           const object = await client.getObject({
-            id: chatId,
+            id: channelId,
             options: {
               showContent: true,
             },
@@ -222,9 +267,10 @@ export function useMessaging() {
               encryptedMessage: msg.encrypted_message,
               contentHash: msg.content_hash,
               sentTimestamp: msg.sent_timestamp,
+              timestamp: parseInt(msg.sent_timestamp),
               isRead: msg.is_read,
               // Decode the message
-              text: String.fromCharCode(...msg.encrypted_message),
+              text: decodeMessage(msg.encrypted_message),
             }));
           }
 
@@ -234,19 +280,19 @@ export function useMessaging() {
           return [];
         }
       },
-      enabled: !!chatId,
+      enabled: !!channelId,
       refetchInterval: 3000, // Poll every 3 seconds for new messages
     });
   };
 
   return {
-    chats,
-    chatsLoading,
-    startChat: startChat.mutate,
+    channels,
+    isLoadingChats,
+    createChannel: createChannel.mutate,
     sendMessage: sendMessage.mutate,
     markAsRead: markAsRead.mutate,
     useMessages,
-    isStartingChat: startChat.isPending,
+    isCreatingChannel: createChannel.isPending,
     isSendingMessage: sendMessage.isPending,
   };
 }

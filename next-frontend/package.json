@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@mysten/dapp-kit": "^0.19.9",
+    "@mysten/messaging": "^0.0.3",
+    "@mysten/seal": "^0.9.4",
     "@mysten/sui": "1.45.0",
     "@mysten/sui.js": "^0.54.1",
     "@radix-ui/react-accordion": "1.2.2",
