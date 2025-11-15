@@ -9,13 +9,13 @@ import { useProfile } from "../../hooks/useProfile";
 import { useSuits } from "../../hooks/useSuits";
 import { useInteractions } from "../../hooks/useInteractions";
 import { CreateProfileModal } from "../../components/create-profile-modal";
-import { UpdateProfileModal } from "../../components/update-profile-modal";
+// import { UpdateProfileModal } from "../../components/update-profile-modal";
 import { SuitCard } from "../../components/suit-card";
-import { useCurrentAccount, useSuiClient } from "@mysten/dapp-kit";
-import CONFIG from "../../config";
+import { useCurrentAccount } from "@mysten/dapp-kit";
 
 function ProfileContent() {
-  const { address } = useSui();
+  const account = useCurrentAccount();
+  const address = account?.address ?? null;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
@@ -24,7 +24,7 @@ function ProfileContent() {
   const [isFollowing, setIsFollowing] = useState(false);
   const { fetchMyProfileFields } = useProfile();
   const { fetchSuits } = useSuits();
-  const { likeSuit, retweetSuit, commentOnSuit } = useInteractions();
+  const { likeSuit, retweetSuit } = useInteractions();
   const [onChainName, setOnChainName] = useState<string>("");
   const [onChainBio, setOnChainBio] = useState<string>("");
   const [onChainPfp, setOnChainPfp] = useState<string>("");
@@ -45,7 +45,7 @@ function ProfileContent() {
         setHasProfile(false);
       }
     })();
-  }, [fetchMyProfileFields]);
+  }, [fetchMyProfileFields, address]);
 
   // Fetch user's suits
   useEffect(() => {

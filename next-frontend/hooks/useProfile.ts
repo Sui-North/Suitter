@@ -41,58 +41,65 @@ export function useProfile() {
   const fetchMyProfileFields = useCallback(async () => {
     const obj: any = await fetchMyProfile();
     if (!obj) return null;
-    const content = obj?.data?.content ?? obj?.content;
+    const content = obj?.data?.content;
     const objectId = obj?.data?.objectId ?? obj?.objectId;
     let username = "";
     let bio = "";
     let pfpUrl = "";
-    const fields = content?.fields ?? content;
-    if (fields) {
-      const readStr = (v: any) => {
-        if (typeof v === "string") return v;
-        if (v && typeof v === "object" && typeof v.bytes === "string")
-          return v.bytes;
-        return "";
-      };
-      if (fields.username) username = readStr(fields.username);
-      if (fields.bio) bio = readStr(fields.bio);
-      if (fields.pfp_url) pfpUrl = readStr(fields.pfp_url);
+    let fields = {};
+    if (content && typeof content === "object" && "fields" in content) {
+      fields = (content as any).fields;
     }
+    const readStr = (v: any) => {
+      if (typeof v === "string") return v;
+      if (v && typeof v === "object" && typeof v.bytes === "string")
+        return v.bytes;
+      return "";
+    };
+    if ((fields as any).username) username = readStr((fields as any).username);
+    if ((fields as any).bio) bio = readStr((fields as any).bio);
+    if ((fields as any).pfp_url) pfpUrl = readStr((fields as any).pfp_url);
     return { profileId: objectId as string, username, bio, pfpUrl };
   }, [fetchMyProfile]);
 
-  const fetchProfileByAddress = useCallback(async (userAddress: string) => {
-    if (!userAddress) return null;
-    try {
-      const res = await suiClient.getOwnedObjects({
-        owner: userAddress,
-        filter: { StructType: PROFILE_TYPE },
-        options: { showType: true, showContent: true, showDisplay: true },
-      });
-      const obj = res.data?.[0];
-      if (!obj) return null;
-      
-      const content = obj?.data?.content ?? obj?.content;
-      const fields = content?.fields ?? content;
-      
-      if (fields) {
+  const fetchProfileByAddress = useCallback(
+    async (userAddress: string) => {
+      if (!userAddress) return null;
+      try {
+        const res = await suiClient.getOwnedObjects({
+          owner: userAddress,
+          filter: { StructType: PROFILE_TYPE },
+          options: { showType: true, showContent: true, showDisplay: true },
+        });
+        const obj = res.data?.[0];
+        if (!obj) return null;
+
+        const content = obj?.data?.content;
+        let fields = {};
+        if (content && typeof content === "object" && "fields" in content) {
+          fields = (content as any).fields;
+        }
         const readStr = (v: any) => {
           if (typeof v === "string") return v;
           if (v && typeof v === "object" && typeof v.bytes === "string")
             return v.bytes;
           return "";
         };
-        const username = fields.username ? readStr(fields.username) : "";
-        const bio = fields.bio ? readStr(fields.bio) : "";
-        const pfpUrl = fields.pfp_url ? readStr(fields.pfp_url) : "";
+        const username = (fields as any).username
+          ? readStr((fields as any).username)
+          : "";
+        const bio = (fields as any).bio ? readStr((fields as any).bio) : "";
+        const pfpUrl = (fields as any).pfp_url
+          ? readStr((fields as any).pfp_url)
+          : "";
         return { username, bio, pfpUrl };
+      } catch (e) {
+        console.error("fetchProfileByAddress failed", e);
+        return null;
       }
-      return null;
-    } catch (e) {
-      console.error("fetchProfileByAddress failed", e);
-      return null;
-    }
-  }, [suiClient]);
+    },
+    [suiClient]
+  );
 
   const createProfile = useCallback(
     async (username: string, bio: string, pfpUrl: string) => {
