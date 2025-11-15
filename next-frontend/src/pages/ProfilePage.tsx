@@ -232,9 +232,9 @@ function ProfileContent() {
             </div> */}
 
             {/* Cover Image */}
-            <div className="relative h-48 bg-muted border-b border-border">
+            {/* <div className="relative h-48 bg-muted border-b border-border">
               <div className="absolute inset-0 bg-linear-to-br from-muted-foreground/5 to-muted-foreground/10" />
-            </div>
+            </div> */}
 
             {/* Profile Info */}
             <div className="border-b border-border mt-24">
