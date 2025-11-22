@@ -13,7 +13,7 @@ Deployment URL: [https://suiitter.vercel.app](https://suitter.vercel.app)
 ## Table of Contents
 
 - [Overview](#overview)
-- [Team ](#team)
+- [Team Members](#team-members)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Technical Stack](#technical-stack)
@@ -28,6 +28,8 @@ Deployment URL: [https://suiitter.vercel.app](https://suitter.vercel.app)
 
 Suitter is a decentralized social network built on the Sui blockchain that provides users with ownership of their data and content. Unlike traditional social platforms, Suitter offers censorship resistance, user sovereignty, and monetization opportunities through NFTs.
 
+Users can create posts (Suits), interact with content through likes and comments, discover and connect with other users, and start direct conversations - all while maintaining full ownership of their data and content.
+
 ### Hackathon Challenge Requirements Met
 
 Core Requirements:
@@ -39,11 +41,15 @@ Bonus Features Implemented:
 - Interactions: On-chain objects for Comments and Likes with real-time updates
 - zkLogin Integration: Sui's ZK Login for seamless web2 user authentication
 - Profiles: Complete Profile system with username, bio, and profile image binding
+- Social Features: User discovery, profile viewing, and direct messaging
 - Advanced Features: Real-time search, balance management, asset tracking, and more
 
 ## Team Members
 
+- Godrich Armah ( Github profile ::  @RicheySon )
 - Abdul Hafis Mohammed ( Github profile :: @pious2847 )
+- Michael Perry Nii Tettey ( Github profile :: @theniitettey )
+- Gabriel Kwame Addo Quainoo    ( Github profile :: @Gabby-Tech1 )
 
 
 ## Features
@@ -53,6 +59,8 @@ Bonus Features Implemented:
 - Decentralized Posting: Create and own your posts as Sui objects (Suits)
 - Real-time Feed: Dynamic feed with automatic refresh every 5 seconds
 - User Profiles: Custom usernames, bios, and profile pictures
+- Profile Discovery: View and explore other users' profiles
+- Direct Messaging: Start conversations directly from user profiles
 - Interactions: Like, comment, and repost functionality
 - Advanced Search: Search users, posts, and content with filters
 - Wallet Integration: Seamless Sui wallet connection
@@ -65,6 +73,7 @@ Bonus Features Implemented:
 - Fast Performance: Optimized with React and Vite
 - Intuitive UI: Twitter-like interface with modern design
 - Real-time Updates: Live feed updates and notifications
+- Enhanced Compose: Clickable compose section with profile avatar display
 
 ### Advanced Features
 
@@ -254,8 +263,10 @@ sui client publish --gas-budget 100000000
 2. Create Profile: Set up your username, bio, and profile picture
 3. Start Posting: Create your first Suit (post) with text and media
 4. Explore: Browse the feed, search for users and content
-5. Interact: Like, comment, and repost other users' content
-6. Manage Assets: View your SUI balance and NFT collection
+5. Discover Users: Click on usernames in posts to view other users' profiles
+6. Connect: Start direct conversations with other users from their profiles
+7. Interact: Like, comment, and repost other users' content
+8. Manage Assets: View your SUI balance and NFT collection
 
 ### For Developers
 
@@ -287,12 +298,18 @@ const profile = await fetchProfileByAddress(userAddress)
 #### `useProfile()`
 - `fetchMyProfile()`: Get current user's profile
 - `fetchProfileByAddress(address)`: Get profile by address
+- `fetchMyProfileFields()`: Get current user's profile fields
 - `createProfile(username, bio, pfpUrl)`: Create new profile
 
 #### `useInteractions()`
 - `likeSuit(suitId)`: Like a suit
 - `commentOnSuit(suitId, content)`: Comment on a suit
 - `retweetSuit(suitId)`: Repost a suit
+
+#### `useMessaging()`
+- `startChat(otherUserAddress)`: Start a new chat with another user
+- `fetchChats()`: Fetch user's chat conversations
+- `sendMessage(chatId, content)`: Send message in a chat
 
 #### `useSearch()`
 - `search(query, filters)`: Search users and posts

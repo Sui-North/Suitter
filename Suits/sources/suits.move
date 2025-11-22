@@ -17,7 +17,6 @@ module suits::suits {
         creator: address,
         content: String,
         media_urls: vector<String>,
-        content_type: String, // "text", "image", "video"
         created_at: u64,
         like_count: u64,
         comment_count: u64,
@@ -60,7 +59,6 @@ module suits::suits {
         registry: &mut SuitRegistry,
         content: vector<u8>,
         media_urls: vector<vector<u8>>,
-        content_type: vector<u8>, // "text", "image", "video"
         clock: &Clock,
         ctx: &mut TxContext
     ) {
@@ -82,14 +80,12 @@ module suits::suits {
         };
         
         let timestamp = clock::timestamp_ms(clock);
-        let content_type_string = utf8(content_type);
         
         let suit = Suit {
             id: object::new(ctx),
             creator: sender_addr,
             content: content_string,
             media_urls: media_urls_strings,
-            content_type: content_type_string,
             created_at: timestamp,
             like_count: 0,
             comment_count: 0,
@@ -249,11 +245,6 @@ module suits::suits {
     /// Get the Suit tip total
     public fun get_tip_total(suit: &Suit): u64 {
         suit.tip_total
-    }
-
-    /// Get the Suit content type
-    public fun get_content_type(suit: &Suit): String {
-        suit.content_type
     }
 
     // ===== Test-only Functions =====

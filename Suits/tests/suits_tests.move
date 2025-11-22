@@ -155,7 +155,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"Hello World! This is my first Suit.",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -172,103 +171,6 @@ module suits::suits_tests {
             assert!(suits::get_content(&suit) == utf8(b"Hello World! This is my first Suit."), 1);
             assert!(suits::get_like_count(&suit) == 0, 2);
             assert!(suits::get_comment_count(&suit) == 0, 3);
-            
-            ts::return_shared(suit);
-        };
-        
-        clock::destroy_for_testing(clock);
-        ts::end(scenario);
-    }
-
-    #[test]
-    fun test_create_suit_with_video_content_type() {
-        let mut scenario = ts::begin(ALICE);
-        let clock = clock::create_for_testing(ts::ctx(&mut scenario));
-        
-        // Initialize suits module
-        {
-            ts::next_tx(&mut scenario, ADMIN);
-            suits::init_for_testing(ts::ctx(&mut scenario));
-        };
-        
-        // Alice creates a video Suit
-        {
-            ts::next_tx(&mut scenario, ALICE);
-            let mut registry = ts::take_shared<SuitRegistry>(&scenario);
-            
-            let mut media_urls = vector::empty<vector<u8>>();
-            vector::push_back(&mut media_urls, b"https://example.com/video.mp4");
-            
-            suits::create_suit(
-                &mut registry,
-                b"Check out my video!",
-                media_urls,
-                b"video", // content_type
-                &clock,
-                ts::ctx(&mut scenario)
-            );
-            
-            ts::return_shared(registry);
-        };
-        
-        // Verify Suit was created with correct content type
-        {
-            ts::next_tx(&mut scenario, ALICE);
-            let suit = ts::take_shared<Suit>(&scenario);
-            
-            assert!(suits::get_creator(&suit) == ALICE, 0);
-            assert!(suits::get_content(&suit) == utf8(b"Check out my video!"), 1);
-            assert!(suits::get_content_type(&suit) == utf8(b"video"), 2);
-            
-            let media_urls = suits::get_media_urls(&suit);
-            assert!(vector::length(&media_urls) == 1, 3);
-            
-            ts::return_shared(suit);
-        };
-        
-        clock::destroy_for_testing(clock);
-        ts::end(scenario);
-    }
-
-    #[test]
-    fun test_create_suit_with_image_content_type() {
-        let mut scenario = ts::begin(ALICE);
-        let clock = clock::create_for_testing(ts::ctx(&mut scenario));
-        
-        // Initialize suits module
-        {
-            ts::next_tx(&mut scenario, ADMIN);
-            suits::init_for_testing(ts::ctx(&mut scenario));
-        };
-        
-        // Alice creates an image Suit
-        {
-            ts::next_tx(&mut scenario, ALICE);
-            let mut registry = ts::take_shared<SuitRegistry>(&scenario);
-            
-            let mut media_urls = vector::empty<vector<u8>>();
-            vector::push_back(&mut media_urls, b"https://example.com/image.jpg");
-            
-            suits::create_suit(
-                &mut registry,
-                b"Beautiful sunset!",
-                media_urls,
-                b"image", // content_type
-                &clock,
-                ts::ctx(&mut scenario)
-            );
-            
-            ts::return_shared(registry);
-        };
-        
-        // Verify Suit was created with correct content type
-        {
-            ts::next_tx(&mut scenario, ALICE);
-            let suit = ts::take_shared<Suit>(&scenario);
-            
-            assert!(suits::get_creator(&suit) == ALICE, 0);
-            assert!(suits::get_content(&suit) == utf8(b"Beautiful sunset!"), 1);
-            assert!(suits::get_content_type(&suit) == utf8(b"image"), 2);
             
             ts::return_shared(suit);
         };
@@ -298,7 +200,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"", // Empty content
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -333,7 +234,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"Check out my Suit!",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -392,7 +292,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"My Suit",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -437,7 +336,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"What do you think?",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -501,7 +399,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"Amazing content!",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );
@@ -571,7 +468,6 @@ module suits::suits_tests {
                 &mut registry,
                 b"My content",
                 vector::empty(),
-                b"text", // content_type
                 &clock,
                 ts::ctx(&mut scenario)
             );

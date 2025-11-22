@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -6,18 +6,18 @@ import {
   Bookmark,
   Share,
   MoreHorizontal,
-  Volume2,
-  VolumeX,
 } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 import { OwnershipHistoryModal } from "./ownership-history-modal";
 import { BidModal } from "./bid-modal";
+import { Link } from "react-router-dom";
 
 interface SuitCardProps {
   id: string;
   author: string;
   handle: string;
   avatar: string;
+  authorAddress?: string;
   content: string;
   timestamp: number;
   likes: number;
@@ -47,6 +47,7 @@ export function SuitCard({
   author,
   handle,
   avatar,
+  authorAddress,
   content,
   timestamp,
   likes,
@@ -70,9 +71,6 @@ export function SuitCard({
   const [showBidMenu, setShowBidMenu] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showBidModal, setShowBidModal] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   const ownershipHistory = [
     {
@@ -106,48 +104,6 @@ export function SuitCard({
     setShowBidMenu(false);
   };
 
-  // Intersection Observer for video autoplay
-  useEffect(() => {
-    if (!videoRef.current || media?.type !== "video") return;
-
-    const video = videoRef.current;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // Video is in viewport - play it
-            video.play().then(() => {
-              setIsPlaying(true);
-            }).catch((error) => {
-              console.log("Autoplay prevented:", error);
-            });
-          } else {
-            // Video is out of viewport - pause it
-            video.pause();
-            setIsPlaying(false);
-          }
-        });
-      },
-      {
-        threshold: 0.5, // Play when 50% of video is visible
-      }
-    );
-
-    observer.observe(video);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [media?.type]);
-
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
   return (
     <>
       <article className="border-b border-border p-4 hover:bg-muted/30 transition-colors cursor-pointer group relative">
@@ -170,10 +126,12 @@ export function SuitCard({
                 </div>
                 <div className="flex text-sm flex-wrap gap-10 items-start">
                   <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-foreground hover:underline">
+                    <Link to={`/profile?address=${authorAddress}`} className="font-semibold text-foreground hover:underline">
                       {author}
-                    </span>
-                    <span className="text-muted-foreground">@{handle}</span>
+                    </Link>
+                    <Link to={`/profile?address=${authorAddress}`} className="text-muted-foreground hover:underline">
+                      @{handle}
+                    </Link>
                   </div>
                   <div className="flex items-center">
                     <span className="text-muted-foreground hover:underline">
@@ -254,7 +212,7 @@ export function SuitCard({
 
           {/* Media */}
           {media && (
-            <div className="mt-3 rounded-2xl overflow-hidden border border-border relative group/media">
+            <div className="mt-3 rounded-2xl overflow-hidden border border-border">
               {media.type === "image" ? (
                 <img
                   src={media.url}
@@ -262,51 +220,11 @@ export function SuitCard({
                   className="w-full max-h-[500px] object-cover"
                 />
               ) : (
-                <>
-                  <video
-                    ref={videoRef}
-                    src={media.url}
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    className="w-full max-h-[500px] object-contain bg-black"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (videoRef.current) {
-                        if (isPlaying) {
-                          videoRef.current.pause();
-                          setIsPlaying(false);
-                        } else {
-                          videoRef.current.play();
-                          setIsPlaying(true);
-                        }
-                      }
-                    }}
-                  />
-                  {/* Mute/Unmute Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleMute();
-                    }}
-                    className="absolute bottom-4 right-4 p-2 bg-black/50 hover:bg-black/70 rounded-full transition-all opacity-0 group-hover/media:opacity-100"
-                    aria-label={isMuted ? "Unmute" : "Mute"}
-                  >
-                    {isMuted ? (
-                      <VolumeX size={20} className="text-white" />
-                    ) : (
-                      <Volume2 size={20} className="text-white" />
-                    )}
-                  </button>
-                  {/* Play/Pause Indicator */}
-                  {!isPlaying && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
-                        <div className="w-0 h-0 border-t-8 border-t-transparent border-l-12 border-l-white border-b-8 border-b-transparent ml-1" />
-                      </div>
-                    </div>
-                  )}
-                </>
+                <video
+                  src={media.url}
+                  controls
+                  className="w-full max-h-[500px] object-contain bg-black"
+                />
               )}
             </div>
           )}

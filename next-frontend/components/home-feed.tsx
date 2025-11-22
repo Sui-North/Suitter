@@ -7,7 +7,6 @@ import { SuitCard } from "./suit-card";
 import { FeedVertical } from "./feed-vertical";
 import { ReplyModal } from "./reply-modal";
 import { CommentsView } from "./comments-view";
-import { FeedSkeleton } from "./suit-skeleton";
 import { truncateAddress } from "@/lib/utils";
 
 interface Suit {
@@ -15,6 +14,7 @@ interface Suit {
   author: string;
   handle: string;
   avatar: string;
+  authorAddress?: string;
   content: string;
   timestamp: number;
   likes: number;
@@ -36,35 +36,192 @@ interface HomeFeedProps {
   onCompose: () => void;
 }
 
+const SAMPLE_SUITS: Suit[] = [
+  {
+    id: "1",
+    author: "Sui Foundation",
+    handle: "suifoundation",
+    avatar: "S",
+    content:
+      "Introducing Suiter - a production-ready decentralized social network built on Sui blockchain. Every post is an NFT with dynamic value.",
+    timestamp: Date.now() - 2 * 60 * 60 * 1000,
+    likes: 1243,
+    replies: 342,
+    reposts: 856,
+    liked: false,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.5,
+    currentBid: 0.75,
+    isEncrypted: true,
+    media: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80",
+    },
+  },
+  {
+    id: "2",
+    author: "Developer Insights",
+    handle: "devinsights",
+    avatar: "D",
+    content:
+      "Building on Sui with React and TypeScript. The performance is incredible. Transactions finalize in milliseconds.",
+    timestamp: Date.now() - 4 * 60 * 60 * 1000,
+    likes: 892,
+    replies: 156,
+    reposts: 423,
+    liked: false,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.3,
+    currentBid: 0.4,
+    isEncrypted: false,
+    media: {
+      type: "video",
+      url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    },
+  },
+  {
+    id: "3",
+    author: "Web3 Daily",
+    handle: "web3daily",
+    avatar: "W",
+    content:
+      "Monochrome elegance meets decentralization. No distractions, just pure connection on the blockchain.",
+    timestamp: Date.now() - 6 * 60 * 60 * 1000,
+    likes: 2156,
+    replies: 678,
+    reposts: 1245,
+    liked: false,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.8,
+    currentBid: 1.2,
+    isEncrypted: true,
+  },
+];
+
+const FOLLOWING_SUITS: Suit[] = [
+  {
+    id: "f1",
+    author: "Sui Builder",
+    handle: "suibuilder",
+    avatar: "SB",
+    content:
+      "Just deployed my first dApp on Sui testnet! The developer experience is amazing. Gas fees are incredibly low compared to other chains.",
+    timestamp: Date.now() - 1 * 60 * 60 * 1000,
+    likes: 456,
+    replies: 89,
+    reposts: 123,
+    liked: false,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.4,
+    currentBid: 0.55,
+    isEncrypted: false,
+  },
+  {
+    id: "f2",
+    author: "NFT Collector",
+    handle: "nftcollector",
+    avatar: "NC",
+    content:
+      "My latest NFT collection on Sui is live! Each piece represents a unique moment in blockchain history. Check out the dynamic metadata updates.",
+    timestamp: Date.now() - 3 * 60 * 60 * 1000,
+    likes: 789,
+    replies: 234,
+    reposts: 456,
+    liked: true,
+    reposted: false,
+    isNFT: true,
+    nftValue: 1.2,
+    currentBid: 1.5,
+    isEncrypted: true,
+    media: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800&q=80",
+    },
+  },
+  {
+    id: "f3",
+    author: "DeFi Enthusiast",
+    handle: "defilife",
+    avatar: "DE",
+    content:
+      "Sui's parallel execution is a game changer for DeFi. No more waiting for transactions to process sequentially. The future is here!",
+    timestamp: Date.now() - 5 * 60 * 60 * 1000,
+    likes: 1024,
+    replies: 178,
+    reposts: 567,
+    liked: false,
+    reposted: true,
+    isNFT: true,
+    nftValue: 0.6,
+    currentBid: 0.8,
+    isEncrypted: false,
+  },
+  {
+    id: "f4",
+    author: "Move Developer",
+    handle: "movedev",
+    avatar: "MD",
+    content:
+      "Writing smart contracts in Move is such a pleasant experience. The safety guarantees and expressiveness make development faster and more secure.",
+    timestamp: Date.now() - 8 * 60 * 60 * 1000,
+    likes: 623,
+    replies: 145,
+    reposts: 289,
+    liked: true,
+    reposted: false,
+    isNFT: true,
+    nftValue: 0.35,
+    currentBid: 0.45,
+    isEncrypted: true,
+    media: {
+      type: "image",
+      url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&q=80",
+    },
+  },
+];
+
 export function HomeFeed({ onCompose }: HomeFeedProps) {
   const account = useCurrentAccount();
   const address = account?.address ?? null;
-  const { fetchSuits, fetchVideoFeed } = useSuits();
+  const { fetchSuits } = useSuits();
   const {
     likeSuit,
     retweetSuit,
     commentOnSuit,
   } = useInteractions();
-  const { fetchProfileByAddress } = useProfile();
-  const [suits, setSuits] = useState<Suit[]>([]);
+  const { fetchProfileByAddress, fetchMyProfileFields } = useProfile();
+  const [forYouSuits, setForYouSuits] = useState<Suit[]>(SAMPLE_SUITS);
+  const [followingSuits, setFollowingSuits] = useState<Suit[]>(FOLLOWING_SUITS);
+  const [onChainSuits, setOnChainSuits] = useState<Suit[]>([]);
   const [tab, setTab] = useState<"foryou" | "following" | "feed">("foryou");
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
   const [replyModalOpen, setReplyModalOpen] = useState(false);
   const [replyToSuit, setReplyToSuit] = useState<Suit | null>(null);
   const [commentsViewOpen, setCommentsViewOpen] = useState(false);
   const [commentsForSuit, setCommentsForSuit] = useState<Suit | null>(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Fetch user profile
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!address) return;
+      const profile = await fetchMyProfileFields();
+      setUserProfile(profile);
+    };
+    loadUserProfile();
+  }, [address, fetchMyProfileFields]);
 
   // Fetch on-chain suits on mount
   useEffect(() => {
     const loadSuits = async () => {
-      // Fetch all suits or video suits based on tab
-      const fetchedSuits = tab === "feed" 
-        ? await fetchVideoFeed(20, 0)
-        : await fetchSuits(20, 0);
+      const suits = await fetchSuits(20, 0);
 
       // Transform on-chain suits to component format
-      const transformedPromises = fetchedSuits.map(async (suit: any) => {
+      const transformedPromises = suits.map(async (suit: any) => {
         const fields = suit?.content?.fields;
         if (!fields) return null;
 
@@ -92,6 +249,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           author: displayName,
           handle: handleName,
           avatar: avatarUrl,
+          authorAddress: creatorAddress,
           content: fields.content || "",
           timestamp: parseInt(fields.created_at) || Date.now(),
           likes: parseInt(fields.like_count) || 0,
@@ -117,22 +275,26 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
         Boolean
       ) as Suit[];
 
-      setSuits(transformed);
-      setIsInitialLoad(false);
+      setOnChainSuits(transformed);
     };
-
-    loadSuits();
 
     const intervalId = setInterval(() => {
       loadSuits();
-    }, 5000); // Refresh every 5 seconds
+    }, 2000);
 
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [fetchSuits, fetchVideoFeed, fetchProfileByAddress, tab]);
 
-  // Get current suits
-  const currentSuits = suits;
+    // loadSuits();
+  }, [fetchSuits, fetchProfileByAddress]);
+
+  // Get current suits based on active tab
+  const currentSuits =
+    tab === "following"
+      ? followingSuits
+      : tab === "foryou"
+      ? [...onChainSuits, ...forYouSuits]
+      : forYouSuits;
 
   const toggleLike = async (id: string) => {
     if (!address) {
@@ -144,7 +306,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     if (!suit) return;
     const isOnChain = id.startsWith("0x");
 
-    // Optimistically update UI
+    // Optimistically update UI - update both arrays
     const updateSuit = (suits: Suit[]) =>
       suits.map((s) =>
         s.id === id
@@ -156,7 +318,9 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           : s
       );
 
-    setSuits(updateSuit(suits));
+    setOnChainSuits(updateSuit(onChainSuits));
+    setForYouSuits(updateSuit(forYouSuits));
+    setFollowingSuits(updateSuit(followingSuits));
 
     // Only call blockchain for on-chain suits
     if (isOnChain) {
@@ -177,7 +341,9 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
               : s
           );
 
-        setSuits(revertSuit(suits));
+        setOnChainSuits(revertSuit(onChainSuits));
+        setForYouSuits(revertSuit(forYouSuits));
+        setFollowingSuits(revertSuit(followingSuits));
       }
     }
   };
@@ -192,7 +358,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
     if (!suit) return;
     const isOnChain = id.startsWith("0x");
 
-    // Optimistically update UI
+    // Optimistically update UI - update both arrays
     const updateSuit = (suits: Suit[]) =>
       suits.map((s) =>
         s.id === id
@@ -204,7 +370,9 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
           : s
       );
 
-    setSuits(updateSuit(suits));
+    setOnChainSuits(updateSuit(onChainSuits));
+    setForYouSuits(updateSuit(forYouSuits));
+    setFollowingSuits(updateSuit(followingSuits));
 
     // Only call blockchain for on-chain suits
     if (isOnChain) {
@@ -225,7 +393,9 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
               : s
           );
 
-        setSuits(revertSuit(suits));
+        setOnChainSuits(revertSuit(onChainSuits));
+        setForYouSuits(revertSuit(forYouSuits));
+        setFollowingSuits(revertSuit(followingSuits));
       }
     }
   };
@@ -260,13 +430,15 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
         console.log("Comment submitted successfully!");
       }
 
-      // Increment the reply count
+      // Increment the reply count - update both arrays
       const updateReplies = (suits: Suit[]) =>
         suits.map((suit) =>
           suit.id === suitId ? { ...suit, replies: suit.replies + 1 } : suit
         );
 
-      setSuits(updateReplies(suits));
+      setOnChainSuits(updateReplies(onChainSuits));
+      setForYouSuits(updateReplies(forYouSuits));
+      setFollowingSuits(updateReplies(followingSuits));
     } catch (error: any) {
       console.error("Failed to comment on suit:", error);
     }
@@ -341,21 +513,32 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       </div>
 
       {/* Compose Section */}
-      {address && tab !== "feed" && (
+      t{address && tab !== "feed" && (
         <div className="border-b border-border p-4">
-          <div className="flex gap-4">
-            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0">
-              {address.slice(-4).toUpperCase()}
+          <button
+            onClick={onCompose}
+            className="w-full flex gap-4 hover:bg-muted/30 transition-colors rounded-lg p-2 -m-2 cursor-pointer group"
+          >
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-sm font-mono font-bold shrink-0 overflow-hidden">
+              {userProfile?.pfpUrl ? (
+                <img
+                  src={userProfile.pfpUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>
+                  {userProfile?.username?.slice(0, 2).toUpperCase() ||
+                   address.slice(-2).toUpperCase()}
+                </span>
+              )}
             </div>
-            <div className="flex-1">
-              <button
-                onClick={onCompose}
-                className="w-full text-left text-lg text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-muted/30"
-              >
+            <div className="flex-1 text-left">
+              <div className="text-lg text-muted-foreground group-hover:text-foreground transition-colors">
                 What's happening!?
-              </button>
+              </div>
             </div>
-          </div>
+          </button>
         </div>
       )}
 
@@ -363,9 +546,7 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
       <div className="flex-1 overflow-y-auto">
         {tab === "feed" ? (
           <FeedVertical />
-        ) : isInitialLoad ? (
-          <FeedSkeleton count={5} />
-        ) : currentSuits.length > 0 ? (
+        ) : (
           <>
             {currentSuits.map((suit) => (
               <SuitCard
@@ -382,26 +563,6 @@ export function HomeFeed({ onCompose }: HomeFeedProps) {
               />
             ))}
           </>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <span className="text-2xl">📝</span>
-            </div>
-            <h3 className="text-foreground text-xl font-bold mb-2">
-              No posts yet
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-sm mb-4">
-              Be the first to share something! Click the compose button to create your first post.
-            </p>
-            {address && (
-              <button
-                onClick={onCompose}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-2 rounded-full font-bold"
-              >
-                Create Post
-              </button>
-            )}
-          </div>
         )}
       </div>
 

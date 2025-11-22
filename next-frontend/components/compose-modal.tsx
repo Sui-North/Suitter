@@ -3,6 +3,7 @@ import { X, Image, Smile, Loader2, Video, XCircle } from "lucide-react";
 import { useCurrentAccount } from "@mysten/dapp-kit";
 import { useSuits } from "../hooks/useSuits";
 import { useWalrusUpload } from "../hooks/useWalrusUpload";
+import { useProfile } from "../hooks/useProfile";
 import { motion, AnimatePresence } from "framer-motion";
 import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react";
 
@@ -12,8 +13,7 @@ interface ComposeModalProps {
 }
 
 const CHAR_LIMIT = 280;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB for images
-const MAX_VIDEO_SIZE = 3 * 1024 * 1024; // 3MB for videos (Walrus limit)
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -27,6 +27,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
   const address = currentAccount?.address;
   const { postSuit, isPosting: _isPostingOnChain } = useSuits();
   const { uploadImage, isUploading } = useWalrusUpload();
+  const { fetchMyProfileFields } = useProfile();
   const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
   const [error, setError] = useState("");
@@ -34,6 +35,7 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
   const [cursorPosition, setCursorPosition] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +67,16 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
     };
   }, [previewUrls]);
 
+  // Fetch user profile when modal opens
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!address || !isOpen) return;
+      const profile = await fetchMyProfileFields();
+      setUserProfile(profile);
+    };
+    loadUserProfile();
+  }, [address, isOpen, fetchMyProfileFields]);
+
   const handleFileSelect = (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "image" | "video"
@@ -75,21 +87,14 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
     const file = files[0];
     const acceptedTypes =
       type === "image" ? ACCEPTED_IMAGE_TYPES : ACCEPTED_VIDEO_TYPES;
-    const maxSize = type === "image" ? MAX_IMAGE_SIZE : MAX_VIDEO_SIZE;
 
     if (!acceptedTypes.includes(file.type)) {
       setError(`Please select a valid ${type} file`);
       return;
     }
 
-    if (file.size > maxSize) {
-      const sizeMB = (maxSize / 1024 / 1024).toFixed(1);
-      const fileSizeMB = (file.size / 1024 / 1024).toFixed(1);
-      setError(
-        `${type === "video" ? "Video" : "Image"} too large! ` +
-        `Max size: ${sizeMB}MB. Your file: ${fileSizeMB}MB. ` +
-        `Please compress it first.`
-      );
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File size must be less than ${MAX_FILE_SIZE / 1024 / 1024}MB`);
       return;
     }
 
@@ -141,7 +146,6 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
     setError("");
     try {
       let mediaUrls: string[] = [];
-      let contentType: 'text' | 'image' | 'video' = 'text';
 
       // Upload media files to Walrus if any
       if (selectedFiles.length > 0) {
@@ -149,14 +153,6 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
           const uploadPromises = selectedFiles.map((file) => uploadImage(file));
           const results = await Promise.all(uploadPromises);
           mediaUrls = results.map((r) => r.url);
-          
-          // Detect content type from the first selected file
-          const firstFile = selectedFiles[0];
-          if (firstFile.type.startsWith('video/')) {
-            contentType = 'video';
-          } else if (firstFile.type.startsWith('image/')) {
-            contentType = 'image';
-          }
         } catch (uploadError: any) {
           console.error("Failed to upload media:", uploadError);
           setError("Failed to upload media. Please try again.");
@@ -165,8 +161,8 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
         }
       }
 
-      // Post suit with media URLs and content type
-      await postSuit(content, mediaUrls, contentType);
+      // Post suit with media URLs
+      await postSuit(content, mediaUrls);
 
       // Cleanup
       previewUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -244,8 +240,20 @@ export function ComposeModal({ isOpen, onClose }: ComposeModalProps) {
           {/* Content */}
           <div className="p-4">
             <div className="flex gap-3">
-              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-xs font-bold shrink-0">
-                {address ? address.slice(0, 2).toUpperCase() : "?"}
+              <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center text-xs font-bold shrink-0 overflow-hidden">
+                {userProfile?.pfpUrl ? (
+                  <img
+                    src={userProfile.pfpUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>
+                    {userProfile?.username?.slice(0, 2).toUpperCase() ||
+                     address?.slice(0, 2).toUpperCase() ||
+                     "?"}
+                  </span>
+                )}
               </div>
               <div className="flex-1">
                 <textarea
