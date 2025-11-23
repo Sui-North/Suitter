@@ -27,9 +27,8 @@ export function MinimalHeader({ onMenuClick }: MinimalHeaderProps) {
               <img
                 src="/logo.png"
                 alt="Suiter Logo"
-                className="h-16 w-16"
+                className="h-20 w-20"
               />
-              <span className="hidden sm:inline-block">Suitter</span>
             </Link>
           </div>
 
